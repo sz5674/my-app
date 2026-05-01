@@ -22,7 +22,6 @@
 - GitHub Pages: [https://sz5674.github.io/my-app/](https://sz5674.github.io/my-app/)
 - 上記URLを開くだけで利用できます
 
-> サーバー起動は不要です（ローカルで動作）。
 
 ---
 
