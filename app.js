@@ -851,19 +851,22 @@ function createVocabQuestionBank() {
 
   const meanings = vocabItems.map((item) => item[1]);
   const bank = [];
+  const variantsPerWord = 7;
 
   vocabItems.forEach(([word, meaning]) => {
-    bank.push({
-      question: word,
-      options: [meaning, ...pickRandomDistinctItems(meanings, 3, meaning)],
-      answer: 0,
-      toeicUnit: "Part 5 語彙・コロケーション",
-      phraseHint:
-        vocabPhraseHints[word] || `頻出表現: ${word} effectively in context`,
-    });
+    for (let i = 0; i < variantsPerWord; i += 1) {
+      bank.push({
+        question: word,
+        options: [meaning, ...pickRandomDistinctItems(meanings, 3, meaning)],
+        answer: 0,
+        toeicUnit: "Part 5 語彙・コロケーション",
+        phraseHint:
+          vocabPhraseHints[word] || `頻出表現: ${word} effectively in context`,
+      });
+    }
   });
 
-  return bank;
+  return bank.slice(0, 500);
 }
 
 function createReadingQuestionBank() {
@@ -1041,10 +1044,10 @@ const readingDoubles = rawReadingQuestionBank.filter(
   (item) => item.toeicUnit === "Part 7 ダブルパッセージ"
 );
 const readingQuestionBank = [
-  ...sampleItems(readingSingles, 45),
+  ...sampleItems(readingSingles, 117),
   ...readingDoubles,
 ];
-const vocabQuestionBank = sampleItems(createVocabQuestionBank(), 48);
+const vocabQuestionBank = createVocabQuestionBank();
 
 function createPart6QuestionBank() {
   const passages = [
@@ -1208,6 +1211,162 @@ function createPart6QuestionBank() {
     },
   ];
 
+  const extraPart6Passages = [
+    {
+      passage:
+        "Notice: Equipment Return\n\nAll temporary devices must be [1] to the IT desk by Friday. Team leads should [2] the return list before noon. [3]\n\nIT Administration",
+      q1: { answer: "returned", options: ["returned", "return", "returning", "returns"] },
+      q2: { answer: "submit", options: ["submit", "submits", "submitted", "submitting"] },
+      q3: {
+        answer: "Late returns may delay next week's equipment allocation.",
+        options: [
+          "Late returns may delay next week's equipment allocation.",
+          "The marketing budget was approved last quarter.",
+          "Please check the cafeteria menu for new items.",
+          "Our website was redesigned by an outside agency.",
+        ],
+      },
+      q4: {
+        answer: "allocation",
+        options: ["allocation", "allocate", "allocated", "allocating"],
+      },
+    },
+    {
+      passage:
+        "Email: Meeting Materials\n\nPlease [1] the updated agenda before this afternoon's meeting. We need to [2] all handouts in advance. [3]\n\nProject Office",
+      q1: { answer: "review", options: ["review", "reviews", "reviewed", "reviewing"] },
+      q2: { answer: "print", options: ["print", "prints", "printed", "printing"] },
+      q3: {
+        answer: "Several attendees requested additional background data.",
+        options: [
+          "Several attendees requested additional background data.",
+          "The parking area will be closed for maintenance.",
+          "Our support team now works in two shifts.",
+          "Please label all storage boxes clearly.",
+        ],
+      },
+      q4: {
+        answer: "background",
+        options: ["background", "backgrounds", "backgrounded", "backgrounding"],
+      },
+    },
+    {
+      passage:
+        "Memo: Policy Update\n\nThe revised travel policy will [1] effect on July 1. Employees should [2] the new reimbursement limits carefully. [3]\n\nFinance Department",
+      q1: { answer: "take", options: ["take", "takes", "taken", "taking"] },
+      q2: { answer: "review", options: ["review", "reviews", "reviewed", "reviewing"] },
+      q3: {
+        answer: "Claims that exceed the limits may require additional approval.",
+        options: [
+          "Claims that exceed the limits may require additional approval.",
+          "The office printer was replaced last month.",
+          "Staff members are invited to the sports event.",
+          "A new coffee machine arrived on Monday.",
+        ],
+      },
+      q4: {
+        answer: "approval",
+        options: ["approval", "approve", "approved", "approving"],
+      },
+    },
+    {
+      passage:
+        "Announcement: Training Session\n\nNew hires are expected to [1] the onboarding seminar next Monday. Managers should [2] attendance by end of day. [3]\n\nHuman Resources",
+      q1: { answer: "attend", options: ["attend", "attends", "attended", "attending"] },
+      q2: { answer: "confirm", options: ["confirm", "confirms", "confirmed", "confirming"] },
+      q3: {
+        answer: "The session materials will be shared after registration closes.",
+        options: [
+          "The session materials will be shared after registration closes.",
+          "The legal team updated the contract template.",
+          "Please submit expense forms by Friday.",
+          "A client meeting was postponed until next week.",
+        ],
+      },
+      q4: {
+        answer: "registration",
+        options: ["registration", "register", "registered", "registering"],
+      },
+    },
+    {
+      passage:
+        "Notice: Building Access\n\nVisitors must [1] at the main counter on arrival. Security will [2] each access pass before entry. [3]\n\nAdministration Office",
+      q1: { answer: "sign in", options: ["sign in", "signed in", "signing in", "signs in"] },
+      q2: { answer: "check", options: ["check", "checks", "checked", "checking"] },
+      q3: {
+        answer: "Please bring a valid photo ID to speed up the check-in process.",
+        options: [
+          "Please bring a valid photo ID to speed up the check-in process.",
+          "The annual report will be distributed next month.",
+          "Our inventory system is currently offline.",
+          "A supplier has requested an earlier payment date.",
+        ],
+      },
+      q4: {
+        answer: "process",
+        options: ["process", "processes", "processed", "processing"],
+      },
+    },
+    {
+      passage:
+        "Internal Update: Website Maintenance\n\nThe customer portal will [1] temporarily unavailable tonight. Engineers will [2] system logs during maintenance. [3]\n\nWeb Operations",
+      q1: { answer: "be", options: ["be", "is", "was", "being"] },
+      q2: { answer: "monitor", options: ["monitor", "monitors", "monitored", "monitoring"] },
+      q3: {
+        answer: "Users may experience slower response times after the update.",
+        options: [
+          "Users may experience slower response times after the update.",
+          "The finance team finalized next quarter's budget.",
+          "Please send your profile photo to HR.",
+          "A workshop on communication will be held tomorrow.",
+        ],
+      },
+      q4: {
+        answer: "response",
+        options: ["response", "respond", "responded", "responding"],
+      },
+    },
+    {
+      passage:
+        "Email: Vendor Contract\n\nPlease [1] the revised contract draft by Wednesday. We must [2] all clauses with the legal team first. [3]\n\nProcurement",
+      q1: { answer: "submit", options: ["submit", "submits", "submitted", "submitting"] },
+      q2: { answer: "review", options: ["review", "reviews", "reviewed", "reviewing"] },
+      q3: {
+        answer: "Any missing signatures will delay the final approval process.",
+        options: [
+          "Any missing signatures will delay the final approval process.",
+          "The travel desk moved to the third floor.",
+          "Please clean your workspace before leaving.",
+          "Our support staff completed system training.",
+        ],
+      },
+      q4: {
+        answer: "approval",
+        options: ["approval", "approve", "approved", "approving"],
+      },
+    },
+    {
+      passage:
+        "Reminder: Invoice Processing\n\nAll invoices should be [1] in the shared folder by noon. Accountants will [2] each entry before payment is released. [3]\n\nAccounting Team",
+      q1: { answer: "uploaded", options: ["uploaded", "upload", "uploading", "uploads"] },
+      q2: { answer: "verify", options: ["verify", "verifies", "verified", "verifying"] },
+      q3: {
+        answer: "Incorrect account numbers can cause significant payment delays.",
+        options: [
+          "Incorrect account numbers can cause significant payment delays.",
+          "The training room capacity is now 40 seats.",
+          "A new vendor orientation starts next Monday.",
+          "Please lock all cabinets after office hours.",
+        ],
+      },
+      q4: {
+        answer: "payment",
+        options: ["payment", "pay", "paid", "paying"],
+      },
+    },
+  ];
+  passages.push(...extraPart6Passages);
+
   const bank = [];
   passages.forEach((item) => {
     bank.push({
@@ -1359,7 +1518,7 @@ function createClozeQuestionBank() {
     ["The CEO said that the new policy _____ next month.", "would begin", ["begins", "has begun", "beginning"]],
   ];
 
-  for (let i = 0; i < 3; i += 1) {
+  for (let i = 0; i < 12; i += 1) {
     verbItems.forEach((template) => {
       bank.push({
         question: template.sentence,
