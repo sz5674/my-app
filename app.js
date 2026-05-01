@@ -40,6 +40,15 @@ function pickRandomDistinctItems(list, count, excludedValue) {
   return picked;
 }
 
+function sampleItems(list, count) {
+  const copy = [...list];
+  for (let i = copy.length - 1; i > 0; i -= 1) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [copy[i], copy[j]] = [copy[j], copy[i]];
+  }
+  return copy.slice(0, Math.min(count, copy.length));
+}
+
 function formatSeconds(totalSeconds) {
   const safe = Math.max(0, totalSeconds);
   const minutes = Math.floor(safe / 60);
@@ -1024,8 +1033,18 @@ function createReadingQuestionBank() {
   return bank;
 }
 
-const readingQuestionBank = createReadingQuestionBank();
-const vocabQuestionBank = createVocabQuestionBank();
+const rawReadingQuestionBank = createReadingQuestionBank();
+const readingSingles = rawReadingQuestionBank.filter(
+  (item) => item.toeicUnit === "Part 7 シングルパッセージ"
+);
+const readingDoubles = rawReadingQuestionBank.filter(
+  (item) => item.toeicUnit === "Part 7 ダブルパッセージ"
+);
+const readingQuestionBank = [
+  ...sampleItems(readingSingles, 45),
+  ...readingDoubles,
+];
+const vocabQuestionBank = sampleItems(createVocabQuestionBank(), 48);
 
 function createPart6QuestionBank() {
   const passages = [
@@ -1340,7 +1359,7 @@ function createClozeQuestionBank() {
     ["The CEO said that the new policy _____ next month.", "would begin", ["begins", "has begun", "beginning"]],
   ];
 
-  for (let i = 0; i < 22; i += 1) {
+  for (let i = 0; i < 3; i += 1) {
     verbItems.forEach((template) => {
       bank.push({
         question: template.sentence,
