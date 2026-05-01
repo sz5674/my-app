@@ -16,10 +16,10 @@
       <button class="tab-button active" data-tab="home">ホーム</button>
       <button class="tab-button" data-tab="records">記録</button>
       <button class="tab-button" data-tab="vocab">英単語テスト</button>
-      <button class="tab-button" data-tab="cloze">穴埋めテスト</button>
-      <button class="tab-button" data-tab="part6">Part 6 テキスト完成</button>
+      <button class="tab-button" data-tab="cloze">短文穴埋め問題</button>
+      <button class="tab-button" data-tab="part6">長文穴埋め問題</button>
+      <button class="tab-button" data-tab="reading">長文読解問題</button>
       <button class="tab-button" data-tab="mock">ミニ模試</button>
-      <button class="tab-button" data-tab="reading">長文テスト</button>
     </nav>
 
     <main class="container">
@@ -28,10 +28,10 @@
         <p>このアプリは、今後リスニングや追加コンテンツを載せる前提の「大枠」です。</p>
         <ul>
           <li>英単語テスト: 4択で語彙強化</li>
-          <li>穴埋めテスト: TOEIC Part 5形式</li>
-          <li>Part 6 テキスト完成: 本文補完＋文挿入</li>
+          <li>短文穴埋め問題: TOEIC Part 5形式</li>
+          <li>長文穴埋め問題: 本文補完＋文挿入</li>
+          <li>長文読解問題: 読解＋設問</li>
           <li>ミニ模試: 10問タイマー付き実戦練習</li>
-          <li>長文テスト: 読解＋設問</li>
         </ul>
         <div id="home-question-counts"></div>
         <p>
@@ -54,23 +54,23 @@
       </section>
 
       <section id="cloze" class="tab-content">
-        <h2>穴埋めテスト（Part 5風）</h2>
+        <h2>短文穴埋め問題（Part 5風）</h2>
         <div id="cloze-quiz" class="quiz-box"></div>
       </section>
 
       <section id="part6" class="tab-content">
-        <h2>Part 6 テキスト完成</h2>
+        <h2>長文穴埋め問題（Part 6）</h2>
         <div id="part6-quiz" class="quiz-box"></div>
+      </section>
+
+      <section id="reading" class="tab-content">
+        <h2>長文読解問題（Part 7）</h2>
+        <div id="reading-quiz" class="quiz-box"></div>
       </section>
 
       <section id="mock" class="tab-content">
         <h2>ミニ模試（Part 5・10問）</h2>
         <div id="mock-test" class="quiz-box"></div>
-      </section>
-
-      <section id="reading" class="tab-content">
-        <h2>長文テスト</h2>
-        <div id="reading-quiz" class="quiz-box"></div>
       </section>
     </main>
 

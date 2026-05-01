@@ -62,6 +62,10 @@ function createPhraseText(question) {
   return "特記事項なし";
 }
 
+function createExplanationText(question) {
+  return question.explanation || "";
+}
+
 function normalizeQuestion(question, fallbackCategory) {
   return {
     ...question,
@@ -171,6 +175,7 @@ function buildInfiniteQuestionSession(config) {
     simplePromptMode = false,
     sectionName = "unknown",
   } = config;
+  const showExplanationFeedback = sectionName !== "vocab";
   const container = document.getElementById(containerId);
   const normalizedQuestionBank = questionBank.map((question) =>
     normalizeQuestion(question, fallbackCategory)
@@ -415,7 +420,10 @@ function buildInfiniteQuestionSession(config) {
             btn.appendChild(badge);
           }
         });
-        feedback.textContent = "";
+        feedback.innerHTML =
+          showExplanationFeedback && q.explanation
+            ? `<strong>解説:</strong> ${createExplanationText(q)}`
+            : "";
         saveSession();
         clearTimer();
         return;
@@ -590,7 +598,10 @@ function buildInfiniteQuestionSession(config) {
             markOptionResult(btn, "不正解", "wrong");
           }
         });
-        feedback.textContent = "";
+        feedback.innerHTML =
+          showExplanationFeedback && q.explanation
+            ? `<strong>解説:</strong> ${createExplanationText(q)}`
+            : "";
         nextBtn.style.display = "inline-block";
         clearTimer();
         saveSession();
@@ -1187,6 +1198,7 @@ function createPart6QuestionBank() {
       answer: item.q1.options.indexOf(item.q1.answer),
       category: "語法",
       toeicUnit: "Part 6 テキスト完成",
+      explanation: `本文の文法・語法に合う語は「${item.q1.answer}」です。`,
       phraseHint: `本文表現: ${item.q1.answer}`,
     });
     bank.push({
@@ -1196,6 +1208,7 @@ function createPart6QuestionBank() {
       answer: item.q2.options.indexOf(item.q2.answer),
       category: "品詞/時制",
       toeicUnit: "Part 6 テキスト完成",
+      explanation: `文脈と文型に最も自然に入る語は「${item.q2.answer}」です。`,
       phraseHint: `本文表現: ${item.q2.answer}`,
     });
     bank.push({
@@ -1205,6 +1218,8 @@ function createPart6QuestionBank() {
       answer: item.q3.options.indexOf(item.q3.answer),
       category: "文挿入",
       toeicUnit: "Part 6 テキスト完成",
+      explanation:
+        "前後の内容とつながる一文を選ぶ問題です。文脈に合う文を選ぶ必要があります。",
       phraseHint: "Part 6ポイント: 文脈に最も自然な文を選ぶ",
     });
     bank.push({
@@ -1228,6 +1243,7 @@ function createPart6QuestionBank() {
       answer: item.q4.options.indexOf(item.q4.answer),
       category: "語形",
       toeicUnit: "Part 6 テキスト完成",
+      explanation: `空欄の文法位置に合う語形は「${item.q4.answer}」です。`,
       phraseHint: `本文表現: ${item.q4.answer}`,
     });
   });
@@ -1404,9 +1420,9 @@ function renderHomeQuestionCounts() {
     <p><strong>問題数（現在）</strong></p>
     <ul>
       <li>英単語テスト: ${vocabQuestionBank.length}問</li>
-      <li>穴埋めテスト（Part 5）: ${clozeQuestionBank.length}問</li>
-      <li>Part 6 テキスト完成: ${part6QuestionBank.length}問</li>
-      <li>長文テスト（Part 7）: ${readingQuestionBank.length}問</li>
+      <li>短文穴埋め問題（Part 5）: ${clozeQuestionBank.length}問</li>
+      <li>長文穴埋め問題（Part 6）: ${part6QuestionBank.length}問</li>
+      <li>長文読解問題（Part 7）: ${readingQuestionBank.length}問</li>
       <li>合計: ${total}問</li>
     </ul>
   `;
