@@ -1,0 +1,79 @@
+<!doctype html>
+<html lang="ja">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>English Study App</title>
+    <link rel="stylesheet" href="./styles.css" />
+  </head>
+  <body>
+    <header class="header">
+      <h1>English Study App</h1>
+      <p>TOEICに向けた英語学習の土台アプリ</p>
+    </header>
+
+    <nav class="tabs">
+      <button class="tab-button active" data-tab="home">ホーム</button>
+      <button class="tab-button" data-tab="records">記録</button>
+      <button class="tab-button" data-tab="vocab">英単語テスト</button>
+      <button class="tab-button" data-tab="cloze">穴埋めテスト</button>
+      <button class="tab-button" data-tab="part6">Part 6 テキスト完成</button>
+      <button class="tab-button" data-tab="mock">ミニ模試</button>
+      <button class="tab-button" data-tab="reading">長文テスト</button>
+    </nav>
+
+    <main class="container">
+      <section id="home" class="tab-content active">
+        <h2>学習メニュー</h2>
+        <p>このアプリは、今後リスニングや追加コンテンツを載せる前提の「大枠」です。</p>
+        <ul>
+          <li>英単語テスト: 4択で語彙強化</li>
+          <li>穴埋めテスト: TOEIC Part 5形式</li>
+          <li>Part 6 テキスト完成: 本文補完＋文挿入</li>
+          <li>ミニ模試: 10問タイマー付き実戦練習</li>
+          <li>長文テスト: 読解＋設問</li>
+        </ul>
+        <div id="home-question-counts"></div>
+        <p>
+          TOEIC Readingの基本構成（Part 5: 30問 / Part 6: 16問 / Part 7: 54問）を意識して、
+          各タブで単元を選んで学習できます。
+        </p>
+        <p>すべて1問ずつ進める学習形式です。</p>
+      </section>
+
+      <section id="records" class="tab-content">
+        <h2>学習記録</h2>
+        <p>毎日の積み上げと累計の推移を確認できます。</p>
+        <div id="records-dashboard" class="dashboard-box"></div>
+        <button id="refresh-records-dashboard" class="next-btn">記録を更新</button>
+      </section>
+
+      <section id="vocab" class="tab-content">
+        <h2>英単語テスト</h2>
+        <div id="vocab-quiz" class="quiz-box"></div>
+      </section>
+
+      <section id="cloze" class="tab-content">
+        <h2>穴埋めテスト（Part 5風）</h2>
+        <div id="cloze-quiz" class="quiz-box"></div>
+      </section>
+
+      <section id="part6" class="tab-content">
+        <h2>Part 6 テキスト完成</h2>
+        <div id="part6-quiz" class="quiz-box"></div>
+      </section>
+
+      <section id="mock" class="tab-content">
+        <h2>ミニ模試（Part 5・10問）</h2>
+        <div id="mock-test" class="quiz-box"></div>
+      </section>
+
+      <section id="reading" class="tab-content">
+        <h2>長文テスト</h2>
+        <div id="reading-quiz" class="quiz-box"></div>
+      </section>
+    </main>
+
+    <script src="./app.js"></script>
+  </body>
+</html>
