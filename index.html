@@ -15,7 +15,7 @@
     <nav class="tabs">
       <button class="tab-button active" data-tab="home">ホーム</button>
       <button class="tab-button" data-tab="records">記録</button>
-      <button class="tab-button" data-tab="vocab">英単語テスト</button>
+      <button class="tab-button" data-tab="vocab">英単語</button>
       <button class="tab-button" data-tab="cloze">短文穴埋め問題</button>
       <button class="tab-button" data-tab="part6">長文穴埋め問題</button>
       <button class="tab-button" data-tab="reading">長文読解問題</button>
@@ -25,20 +25,26 @@
     <main class="container">
       <section id="home" class="tab-content active">
         <h2>学習メニュー</h2>
-        <p>このアプリは、今後リスニングや追加コンテンツを載せる前提の「大枠」です。</p>
+        <div class="dashboard-box home-guide">
+          <p><strong>はじめての方へ</strong></p>
+          <p>
+            まずは<strong>英単語</strong>タブへ。英単語が出たら、意味に合う日本語を4択から選びます。正解・不正解は色とバッジで分かります。
+          </p>
+          <button type="button" class="next-btn" data-open-tab="vocab">
+            英単語の画面を開く
+          </button>
+        </div>
+        <p>
+          各タブは1問ずつ進みます。単元の絞り込みは、問題のあるタブで「TOEIC単元」から選べます。
+        </p>
         <ul>
-          <li>英単語テスト: 4択で語彙強化</li>
-          <li>短文穴埋め問題: TOEIC Part 5形式</li>
-          <li>長文穴埋め問題: 本文補完＋文挿入</li>
-          <li>長文読解問題: 読解＋設問</li>
-          <li>ミニ模試: 10問タイマー付き実戦練習</li>
+          <li><strong>英単語</strong>：語と意味の4択</li>
+          <li><strong>短文穴埋め（Part 5）</strong>：文法・語法の4択</li>
+          <li><strong>長文穴埋め（Part 6）</strong>：本文補完・文挿入</li>
+          <li><strong>長文読解（Part 7）</strong>：パッセージ読解の4択</li>
+          <li><strong>ミニ模試</strong>：10問タイマー（Part 5〜7と語彙のミックス）</li>
         </ul>
         <div id="home-question-counts"></div>
-        <p>
-          TOEIC Readingの基本構成（Part 5: 30問 / Part 6: 16問 / Part 7: 54問）を意識して、
-          各タブで単元を選んで学習できます。
-        </p>
-        <p>すべて1問ずつ進める学習形式です。</p>
       </section>
 
       <section id="records" class="tab-content">
@@ -49,12 +55,12 @@
       </section>
 
       <section id="vocab" class="tab-content">
-        <h2>英単語テスト</h2>
+        <h2>英単語</h2>
         <div id="vocab-quiz" class="quiz-box"></div>
       </section>
 
       <section id="cloze" class="tab-content">
-        <h2>短文穴埋め問題（Part 5風）</h2>
+        <h2>短文穴埋め問題（Part 5）</h2>
         <div id="cloze-quiz" class="quiz-box"></div>
       </section>
 
@@ -69,7 +75,7 @@
       </section>
 
       <section id="mock" class="tab-content">
-        <h2>ミニ模試（Part 5・10問）</h2>
+        <h2>ミニ模試（10問）</h2>
         <div id="mock-test" class="quiz-box"></div>
       </section>
     </main>

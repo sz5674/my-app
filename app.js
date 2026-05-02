@@ -1651,7 +1651,7 @@ function renderHomeQuestionCounts() {
   box.innerHTML = `
     <p><strong>問題数（現在）</strong></p>
     <ul>
-      <li>英単語テスト: ${vocabQuestionBank.length}問</li>
+      <li>英単語: ${vocabQuestionBank.length}問</li>
       <li>短文穴埋め問題（Part 5）: ${clozeQuestionBank.length}問</li>
       <li>長文穴埋め問題（Part 6）: ${part6QuestionBank.length}問</li>
       <li>長文読解問題（Part 7）: ${readingQuestionBank.length}問</li>
@@ -1660,20 +1660,29 @@ function renderHomeQuestionCounts() {
   `;
 }
 
-function setupTabs() {
-  const tabButtons = document.querySelectorAll(".tab-button");
-  const tabContents = document.querySelectorAll(".tab-content");
+function activateTab(tabName) {
+  if (!tabName || !document.getElementById(tabName)) return;
+  document.querySelectorAll(".tab-button").forEach((btn) => {
+    btn.classList.toggle("active", btn.dataset.tab === tabName);
+  });
+  document.querySelectorAll(".tab-content").forEach((content) => {
+    content.classList.toggle("active", content.id === tabName);
+  });
+  if (tabName === "records") {
+    renderRecordsDashboard();
+  }
+}
 
-  tabButtons.forEach((button) => {
+function setupTabs() {
+  document.querySelectorAll(".tab-button").forEach((button) => {
     button.addEventListener("click", () => {
-      const tabName = button.dataset.tab;
-      tabButtons.forEach((btn) => btn.classList.remove("active"));
-      tabContents.forEach((content) => content.classList.remove("active"));
-      button.classList.add("active");
-      document.getElementById(tabName).classList.add("active");
-      if (tabName === "records") {
-        renderRecordsDashboard();
-      }
+      activateTab(button.dataset.tab);
+    });
+  });
+  document.querySelectorAll("[data-open-tab]").forEach((el) => {
+    el.addEventListener("click", () => {
+      const tab = el.getAttribute("data-open-tab");
+      if (tab) activateTab(tab);
     });
   });
 }

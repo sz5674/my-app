@@ -123,6 +123,11 @@ body {
   background: #f9fbff;
 }
 
+.home-guide {
+  margin-top: 0;
+  margin-bottom: 16px;
+}
+
 .dashboard-grid {
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
