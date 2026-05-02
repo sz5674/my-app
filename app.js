@@ -8,6 +8,67 @@ const DAILY_RECORD_KEY = "english-app-daily-record-v1";
 const DEFAULT_TIME_LIMIT = 20;
 const DEFAULT_DAILY_GOAL = 30;
 
+const CONFETTI_COLORS = [
+  "#1d4ed8",
+  "#2563eb",
+  "#60a5fa",
+  "#fbbf24",
+  "#34d399",
+  "#a78bfa",
+  "#f472b6",
+];
+
+function ensureFxLayer() {
+  let layer = document.getElementById("fx-layer");
+  if (!layer) {
+    layer = document.createElement("div");
+    layer.id = "fx-layer";
+    layer.className = "fx-layer";
+    layer.setAttribute("aria-hidden", "true");
+    document.body.appendChild(layer);
+  }
+  return layer;
+}
+
+function spawnConfettiAt(centerX, centerY, tier = "small") {
+  const layer = ensureFxLayer();
+  const counts = { small: 22, medium: 48, large: 80 };
+  const count = counts[tier] || counts.small;
+  const maxDurMs = tier === "large" ? 1350 : tier === "medium" ? 1150 : 950;
+  const baseSpeed = tier === "large" ? 150 : tier === "medium" ? 120 : 95;
+  for (let i = 0; i < count; i += 1) {
+    const piece = document.createElement("span");
+    piece.className = "confetti-piece";
+    const angle = Math.random() * Math.PI * 2;
+    const speed = baseSpeed + Math.random() * 100;
+    const dx = Math.cos(angle) * speed;
+    const dy = Math.sin(angle) * speed - 25 - Math.random() * 50;
+    piece.style.left = `${centerX}px`;
+    piece.style.top = `${centerY}px`;
+    piece.style.setProperty("--dx", `${dx}px`);
+    piece.style.setProperty("--dy", `${dy}px`);
+    piece.style.setProperty("--rot", `${(Math.random() - 0.5) * 900}deg`);
+    const durSec = 0.75 + Math.random() * 0.4;
+    piece.style.setProperty("--burst-dur", `${durSec}s`);
+    piece.style.background =
+      CONFETTI_COLORS[Math.floor(Math.random() * CONFETTI_COLORS.length)];
+    layer.appendChild(piece);
+    window.setTimeout(() => piece.remove(), maxDurMs);
+  }
+}
+
+function spawnConfettiFromElement(element, tier = "small") {
+  if (!element || typeof element.getBoundingClientRect !== "function") {
+    return;
+  }
+  const rect = element.getBoundingClientRect();
+  spawnConfettiAt(
+    rect.left + rect.width / 2,
+    rect.top + rect.height / 2,
+    tier
+  );
+}
+
 function shuffleQuestion(question) {
   const optionsWithFlag = question.options.map((option, index) => ({
     option,
@@ -607,6 +668,9 @@ function buildInfiniteQuestionSession(config) {
             markOptionResult(btn, "不正解", "wrong");
           }
         });
+        if (isCorrect) {
+          spawnConfettiFromElement(button, "small");
+        }
         feedback.innerHTML =
           showExplanationFeedback && q.explanation
             ? `<strong>解説:</strong> ${createExplanationText(q)}`
@@ -1932,6 +1996,8 @@ function setupMiniMockTest(questionBanks) {
 
   function finishExam() {
     stopTimer();
+    const finalScore = session.score;
+    const finalTotal = session.questions.length;
     session.completed = true;
     session.started = false;
     saveMockState(
@@ -1942,6 +2008,20 @@ function setupMiniMockTest(questionBanks) {
     );
     render();
     renderRecordsDashboard();
+    if (finalTotal > 0) {
+      const ratio = finalScore / finalTotal;
+      window.setTimeout(() => {
+        const cx = window.innerWidth / 2;
+        const cy = window.innerHeight * 0.32;
+        if (finalScore === finalTotal) {
+          spawnConfettiAt(cx, cy, "large");
+        } else if (ratio >= 0.8) {
+          spawnConfettiAt(cx, cy, "medium");
+        } else if (ratio >= 0.5) {
+          spawnConfettiAt(cx, cy, "small");
+        }
+      }, 120);
+    }
   }
 
   function getRecommendedCategory(categoryStats) {
