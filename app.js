@@ -620,13 +620,11 @@ function buildInfiniteQuestionSession(config) {
       <button class="next-btn" id="${containerId}-next" style="display:${
         session.isAnswered ? "inline-block" : "none"
       };">次の問題</button>
-      <button class="next-btn" id="${containerId}-reset">セッションをリセット</button>
     `;
 
     const optionButtons = container.querySelectorAll(".option-btn");
     const feedback = document.getElementById(`${containerId}-feedback`);
     const nextBtn = document.getElementById(`${containerId}-next`);
-    const resetBtn = document.getElementById(`${containerId}-reset`);
     const unitSelect = document.getElementById(`${containerId}-toeic-unit`);
     const timedModeCheckbox = document.getElementById(`${containerId}-timed-mode`);
     const timeLimitSelect = document.getElementById(`${containerId}-time-limit`);
@@ -683,14 +681,6 @@ function buildInfiniteQuestionSession(config) {
 
     nextBtn.addEventListener("click", () => {
       moveToNextQuestion();
-    });
-
-    resetBtn.addEventListener("click", () => {
-      clearTimer();
-      session = getInitialSession();
-      session.currentQuestion = getNextQuestion();
-      saveSession();
-      render();
     });
 
     if (unitSelect) {
