@@ -25,18 +25,18 @@
     <main class="container">
       <section id="home" class="tab-content active">
         <h2>学習メニュー</h2>
-        <div class="dashboard-box home-guide">
-          <p><strong>はじめての方へ</strong></p>
-          <p>
-            まずは<strong>英単語</strong>タブへ。英単語が出たら、意味に合う日本語を4択から選びます。正解・不正解は色とバッジで分かります。
-          </p>
-          <button type="button" class="next-btn" data-open-tab="vocab">
-            英単語の画面を開く
-          </button>
-        </div>
-        <p>
-          各タブは1問ずつ進みます。単元の絞り込みは、問題のあるタブで「TOEIC単元」から選べます。
+        <p class="home-note">
+          <strong>初めてでも</strong>操作はどのタブも同じです。すぐ開く：
+          <button type="button" class="inline-tab-link" data-open-tab="vocab">英単語</button> ·
+          <button type="button" class="inline-tab-link" data-open-tab="cloze">短文穴埋め</button> ·
+          <button type="button" class="inline-tab-link" data-open-tab="part6">長文穴埋め</button> ·
+          <button type="button" class="inline-tab-link" data-open-tab="reading">長文読解</button> ·
+          <button type="button" class="inline-tab-link" data-open-tab="mock">ミニ模試</button>
         </p>
+        <p class="home-note home-note-muted">
+          TOEIC 全体の <strong>Part 1〜4</strong> は<strong>リスニング</strong>です。本アプリは<strong>リスニング未対応</strong>で、公式の <strong>Reading（Part 5・6・7）</strong> に相当する穴埋め・読解と語彙の練習です（Speaking / Writing もなし）。
+        </p>
+        <p class="home-note">1問ずつ進みます。単元の絞り込みは各タブの「TOEIC単元」から。</p>
         <ul>
           <li><strong>英単語</strong>：語と意味の4択</li>
           <li><strong>短文穴埋め（Part 5）</strong>：文法・語法の4択</li>
@@ -44,6 +44,12 @@
           <li><strong>長文読解（Part 7）</strong>：パッセージ読解の4択</li>
           <li><strong>ミニ模試</strong>：10問タイマー（Part 5〜7と語彙のミックス）</li>
         </ul>
+        <p class="home-settings">
+          <label class="control-item sound-fx-label">
+            <input type="checkbox" id="sound-fx-toggle" />
+            正解時に短い音を鳴らす（任意・既定はオフ）
+          </label>
+        </p>
         <div id="home-question-counts"></div>
       </section>
 

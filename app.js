@@ -7,6 +7,7 @@ const MOCK_STATE_KEY = "english-app-mock-state-v1";
 const DAILY_RECORD_KEY = "english-app-daily-record-v1";
 const DEFAULT_TIME_LIMIT = 20;
 const DEFAULT_DAILY_GOAL = 30;
+const SOUND_FX_KEY = "english-app-sound-fx-v1";
 
 const CONFETTI_COLORS = [
   "#1d4ed8",
@@ -17,6 +18,50 @@ const CONFETTI_COLORS = [
   "#a78bfa",
   "#f472b6",
 ];
+
+function prefersReducedMotion() {
+  return (
+    typeof window.matchMedia === "function" &&
+    window.matchMedia("(prefers-reduced-motion: reduce)").matches
+  );
+}
+
+function getSoundFxEnabled() {
+  return localStorage.getItem(SOUND_FX_KEY) === "1";
+}
+
+function setSoundFxEnabled(enabled) {
+  localStorage.setItem(SOUND_FX_KEY, enabled ? "1" : "0");
+}
+
+let sharedAudioContext = null;
+
+function playCorrectChime() {
+  if (!getSoundFxEnabled() || prefersReducedMotion()) return;
+  try {
+    const Ctx = window.AudioContext || window.webkitAudioContext;
+    if (!Ctx) return;
+    if (!sharedAudioContext) sharedAudioContext = new Ctx();
+    const ctx = sharedAudioContext;
+    if (ctx.state === "suspended") {
+      void ctx.resume();
+    }
+    const osc = ctx.createOscillator();
+    const gain = ctx.createGain();
+    osc.type = "sine";
+    osc.frequency.value = 880;
+    osc.connect(gain);
+    gain.connect(ctx.destination);
+    const t0 = ctx.currentTime;
+    gain.gain.setValueAtTime(0.0001, t0);
+    gain.gain.exponentialRampToValueAtTime(0.07, t0 + 0.02);
+    gain.gain.exponentialRampToValueAtTime(0.0001, t0 + 0.12);
+    osc.start(t0);
+    osc.stop(t0 + 0.13);
+  } catch (_err) {
+    /* 非HTTPS環境などでは無視 */
+  }
+}
 
 function ensureFxLayer() {
   let layer = document.getElementById("fx-layer");
@@ -33,21 +78,32 @@ function ensureFxLayer() {
 function spawnConfettiAt(centerX, centerY, tier = "small") {
   const layer = ensureFxLayer();
   const counts = { small: 22, medium: 48, large: 80 };
-  const count = counts[tier] || counts.small;
-  const maxDurMs = tier === "large" ? 1350 : tier === "medium" ? 1150 : 950;
-  const baseSpeed = tier === "large" ? 150 : tier === "medium" ? 120 : 95;
+  let count = counts[tier] || counts.small;
+  let maxDurMs = tier === "large" ? 1350 : tier === "medium" ? 1150 : 950;
+  let baseSpeed = tier === "large" ? 150 : tier === "medium" ? 120 : 95;
+  if (prefersReducedMotion()) {
+    count = Math.min(count, 10);
+    maxDurMs = Math.min(maxDurMs, 700);
+    baseSpeed = Math.min(baseSpeed, 70);
+  }
   for (let i = 0; i < count; i += 1) {
     const piece = document.createElement("span");
     piece.className = "confetti-piece";
     const angle = Math.random() * Math.PI * 2;
-    const speed = baseSpeed + Math.random() * 100;
+    const speed = baseSpeed + Math.random() * (prefersReducedMotion() ? 40 : 100);
     const dx = Math.cos(angle) * speed;
-    const dy = Math.sin(angle) * speed - 25 - Math.random() * 50;
+    const dy =
+      Math.sin(angle) * speed -
+      25 -
+      Math.random() * (prefersReducedMotion() ? 25 : 50);
     piece.style.left = `${centerX}px`;
     piece.style.top = `${centerY}px`;
     piece.style.setProperty("--dx", `${dx}px`);
     piece.style.setProperty("--dy", `${dy}px`);
-    piece.style.setProperty("--rot", `${(Math.random() - 0.5) * 900}deg`);
+    piece.style.setProperty(
+      "--rot",
+      `${(Math.random() - 0.5) * (prefersReducedMotion() ? 200 : 900)}deg`
+    );
     const durSec = 0.75 + Math.random() * 0.4;
     piece.style.setProperty("--burst-dur", `${durSec}s`);
     piece.style.background =
@@ -66,6 +122,63 @@ function spawnConfettiFromElement(element, tier = "small") {
     rect.left + rect.width / 2,
     rect.top + rect.height / 2,
     tier
+  );
+}
+
+/** ミニ模試以外の練習用。連続正解数 1〜10 で粒子数・飛び方が段階的に増え、10 で頭打ち */
+function spawnConfettiAtPracticeStreak(centerX, centerY, streakAfterCorrect) {
+  const streak = Math.min(Math.max(Number(streakAfterCorrect) || 1, 1), 10);
+  const t = (streak - 1) / 9;
+  let count = Math.round(12 + t * 70);
+  let maxDurMs = Math.round(920 + streak * 42);
+  let baseSpeed = Math.round(86 + t * 62);
+  if (prefersReducedMotion()) {
+    count = Math.min(Math.max(Math.round(4 + t * 6), 4), 10);
+    maxDurMs = Math.min(maxDurMs, 650);
+    baseSpeed = Math.min(baseSpeed, 72);
+  }
+  const layer = ensureFxLayer();
+  for (let i = 0; i < count; i += 1) {
+    const piece = document.createElement("span");
+    piece.className = "confetti-piece";
+    const angle = Math.random() * Math.PI * 2;
+    const speed =
+      baseSpeed +
+      Math.random() * (prefersReducedMotion() ? 35 : 95 + t * 35);
+    const dx = Math.cos(angle) * speed;
+    const dy =
+      Math.sin(angle) * speed -
+      22 -
+      Math.random() * (prefersReducedMotion() ? 22 : 40 + t * 35);
+    piece.style.left = `${centerX}px`;
+    piece.style.top = `${centerY}px`;
+    piece.style.setProperty("--dx", `${dx}px`);
+    piece.style.setProperty("--dy", `${dy}px`);
+    piece.style.setProperty(
+      "--rot",
+      `${(Math.random() - 0.5) * (prefersReducedMotion() ? 160 : 720 + t * 400)}deg`
+    );
+    const durSec =
+      0.72 +
+      Math.random() *
+        (prefersReducedMotion() ? 0.2 : 0.35 + t * 0.25);
+    piece.style.setProperty("--burst-dur", `${durSec}s`);
+    piece.style.background =
+      CONFETTI_COLORS[Math.floor(Math.random() * CONFETTI_COLORS.length)];
+    layer.appendChild(piece);
+    window.setTimeout(() => piece.remove(), maxDurMs);
+  }
+}
+
+function spawnConfettiFromElementPracticeStreak(element, streakAfterCorrect) {
+  if (!element || typeof element.getBoundingClientRect !== "function") {
+    return;
+  }
+  const rect = element.getBoundingClientRect();
+  spawnConfettiAtPracticeStreak(
+    rect.left + rect.width / 2,
+    rect.top + rect.height / 2,
+    streakAfterCorrect
   );
 }
 
@@ -269,6 +382,7 @@ function buildInfiniteQuestionSession(config) {
       recentQuestionKeys: [],
       weakPriorityEnabled: enableWeakPriority,
       wrongOptionStats: {},
+      correctStreak: 0,
       dailyStats: {
         date: getTodayKey(),
         attempted: 0,
@@ -305,6 +419,10 @@ function buildInfiniteQuestionSession(config) {
             ? parsed.weakPriorityEnabled
             : enableWeakPriority,
         wrongOptionStats: parsed.wrongOptionStats || {},
+        correctStreak: Math.min(
+          10,
+          Math.max(0, Number(parsed.correctStreak) || 0)
+        ),
         dailyStats:
           parsed.dailyStats && parsed.dailyStats.date
             ? parsed.dailyStats
@@ -479,6 +597,7 @@ function buildInfiniteQuestionSession(config) {
         });
         const key = `${q.category}::${q.question}`;
         session.weakStats[key] = Number(session.weakStats[key] || 0) + 1;
+        session.correctStreak = 0;
         const optionButtons = container.querySelectorAll(".option-btn");
         optionButtons.forEach((btn, idx) => {
           btn.disabled = true;
@@ -667,12 +786,31 @@ function buildInfiniteQuestionSession(config) {
           }
         });
         if (isCorrect) {
-          spawnConfettiFromElement(button, "small");
+          session.correctStreak = Math.min(
+            10,
+            Number(session.correctStreak || 0) + 1
+          );
+          spawnConfettiFromElementPracticeStreak(button, session.correctStreak);
+          playCorrectChime();
+        } else {
+          session.correctStreak = 0;
         }
-        feedback.innerHTML =
-          showExplanationFeedback && q.explanation
-            ? `<strong>解説:</strong> ${createExplanationText(q)}`
-            : "";
+        const feedbackParts = [];
+        if (showExplanationFeedback && q.explanation) {
+          feedbackParts.push(
+            `<strong>解説:</strong> ${createExplanationText(q)}`
+          );
+        }
+        if (isCorrect) {
+          if (session.correctStreak >= 2) {
+            feedbackParts.push(
+              `<p class="streak-line"><strong>${session.correctStreak}連続正解</strong></p>`
+            );
+          } else {
+            feedbackParts.push(`<p class="streak-line"><strong>正解</strong></p>`);
+          }
+        }
+        feedback.innerHTML = feedbackParts.join("");
         nextBtn.style.display = "inline-block";
         clearTimer();
         saveSession();
@@ -778,7 +916,7 @@ function createVocabQuestionBank() {
     cancel: "頻出表現: cancel an order / cancel the subscription",
     extend: "頻出表現: extend the deadline / extend support hours",
     renew: "頻出表現: renew a contract / renew a license",
-    allocate: "頻出表現: allocate resources / allocate a budget",
+    allocate: "頻出表現: allocate a budget / allocate resources across teams",
     authorize: "頻出表現: authorize payment / authorize access",
     coordinate: "頻出表現: coordinate with vendors / coordinate team schedules",
     clarify: "頻出表現: clarify expectations / clarify the requirements",
@@ -792,7 +930,7 @@ function createVocabQuestionBank() {
     facilitate: "頻出表現: facilitate communication / facilitate the transition",
     finalize: "頻出表現: finalize the schedule / finalize contract details",
     implement: "頻出表現: implement a new system / implement policy changes",
-    inform: "頻出表現: inform stakeholders / inform the customer",
+    inform: "頻出表現: inform stakeholders / inform the customer promptly",
     launch: "頻出表現: launch a campaign / launch a new service",
     monitor: "頻出表現: monitor progress / monitor system performance",
     notify: "頻出表現: notify all participants / notify us in advance",
@@ -835,7 +973,7 @@ function createVocabQuestionBank() {
     ["purchase", "購入する"],
     ["delay", "遅らせる"],
     ["attend", "出席する"],
-    ["assign", "割り当てる"],
+    ["assign", "任命する"],
     ["maintain", "維持する"],
     ["replace", "交換する"],
     ["respond", "返答する"],
@@ -861,7 +999,7 @@ function createVocabQuestionBank() {
     ["cancel", "取り消す"],
     ["extend", "延長する"],
     ["renew", "更新する"],
-    ["allocate", "割り当てる"],
+    ["allocate", "配分する"],
     ["authorize", "許可する"],
     ["coordinate", "調整する"],
     ["clarify", "明確にする"],
@@ -874,18 +1012,18 @@ function createVocabQuestionBank() {
     ["evaluate", "評価する"],
     ["facilitate", "促進する"],
     ["finalize", "確定する"],
-    ["implement", "実行する"],
-    ["inform", "通知する"],
+    ["implement", "導入する"],
+    ["inform", "周知する"],
     ["launch", "開始する"],
     ["monitor", "監視する"],
     ["notify", "知らせる"],
     ["obtain", "得る"],
     ["participate", "参加する"],
-    ["perform", "実行する"],
+    ["perform", "遂行する"],
     ["prioritize", "優先する"],
     ["process", "処理する"],
     ["propose", "提案する"],
-    ["reassign", "再割り当てする"],
+    ["reassign", "異動させる"],
     ["recommend", "推薦する"],
     ["reconcile", "照合する"],
     ["register", "登録する"],
@@ -904,6 +1042,37 @@ function createVocabQuestionBank() {
   ];
 
   const meanings = vocabItems.map((item) => item[1]);
+  const wordToMeaning = Object.fromEntries(vocabItems);
+  const meaningBanForWord = {
+    inform: new Set(["notify"].map((w) => wordToMeaning[w]).filter(Boolean)),
+    notify: new Set(["inform"].map((w) => wordToMeaning[w]).filter(Boolean)),
+    assign: new Set(
+      ["allocate", "reassign"].map((w) => wordToMeaning[w]).filter(Boolean)
+    ),
+    allocate: new Set(
+      ["assign", "reassign"].map((w) => wordToMeaning[w]).filter(Boolean)
+    ),
+    reassign: new Set(
+      ["assign", "allocate"].map((w) => wordToMeaning[w]).filter(Boolean)
+    ),
+    implement: new Set(["perform"].map((w) => wordToMeaning[w]).filter(Boolean)),
+    perform: new Set(["implement"].map((w) => wordToMeaning[w]).filter(Boolean)),
+  };
+
+  function pickVocabDistractors(word, correctMeaning) {
+    const ban = meaningBanForWord[word] || new Set();
+    const primary = meanings.filter(
+      (m) => m !== correctMeaning && !ban.has(m)
+    );
+    let picked = pickRandomDistinctItems(primary, 3, correctMeaning);
+    if (picked.length >= 3) return picked;
+    const rest = meanings.filter(
+      (m) => m !== correctMeaning && !picked.includes(m)
+    );
+    const more = pickRandomDistinctItems(rest, 3 - picked.length, correctMeaning);
+    return [...picked, ...more].slice(0, 3);
+  }
+
   const bank = [];
   const variantsPerWord = 7;
 
@@ -911,7 +1080,7 @@ function createVocabQuestionBank() {
     for (let i = 0; i < variantsPerWord; i += 1) {
       bank.push({
         question: word,
-        options: [meaning, ...pickRandomDistinctItems(meanings, 3, meaning)],
+        options: [meaning, ...pickVocabDistractors(word, meaning)],
         answer: 0,
         toeicUnit: "Part 5 語彙・コロケーション",
         phraseHint:
@@ -1082,7 +1251,8 @@ function createReadingQuestionBank() {
       options: item.options,
       answer: item.answer,
       toeicUnit: "Part 7 ダブルパッセージ",
-      explanation: "2つの文書を照合して、依頼・理由・条件を特定する問題です。",
+      explanation:
+        "メールとメモの両方に書かれている事実（日付・金額・依頼内容）だけを根拠に選ぶ。片方にしか出てこない選択肢は除外する。",
       phraseHint: item.phraseHint,
     });
   });
@@ -1430,7 +1600,8 @@ function createPart6QuestionBank() {
       answer: item.q1.options.indexOf(item.q1.answer),
       category: "語法",
       toeicUnit: "Part 6 テキスト完成",
-      explanation: `本文の文法・語法に合う語は「${item.q1.answer}」です。`,
+      explanation:
+        "Blank 1：直前の will / must / Please / are expected to などと主語を見て、そこに続く述語の形（原形・過去分詞など）で候補を削る。",
       phraseHint: `本文表現: ${item.q1.answer}`,
     });
     bank.push({
@@ -1440,7 +1611,8 @@ function createPart6QuestionBank() {
       answer: item.q2.options.indexOf(item.q2.answer),
       category: "品詞/時制",
       toeicUnit: "Part 6 テキスト完成",
-      explanation: `文脈と文型に最も自然に入る語は「${item.q2.answer}」です。`,
+      explanation:
+        "Blank 2：同じ段落内の並列・次の述語と、時制・原形・受動のどれが揃うかで形を決める。",
       phraseHint: `本文表現: ${item.q2.answer}`,
     });
     bank.push({
@@ -1451,8 +1623,8 @@ function createPart6QuestionBank() {
       category: "文挿入",
       toeicUnit: "Part 6 テキスト完成",
       explanation:
-        "前後の内容とつながる一文を選ぶ問題です。文脈に合う文を選ぶ必要があります。",
-      phraseHint: "Part 6ポイント: 文脈に最も自然な文を選ぶ",
+        "Blank 3：空欄の直前・直後の話題（目的・手順・注意）と論理的につながる文だけが答え。他は話題がずれる。",
+      phraseHint: "Part 6ポイント: 前後の段落と話題が一致する挿入文を選ぶ",
     });
     bank.push({
       passage:
@@ -1475,7 +1647,8 @@ function createPart6QuestionBank() {
       answer: item.q4.options.indexOf(item.q4.answer),
       category: "語形",
       toeicUnit: "Part 6 テキスト完成",
-      explanation: `空欄の文法位置に合う語形は「${item.q4.answer}」です。`,
+      explanation:
+        "Blank 4：冠詞や形容詞のあとなど名詞スロットでは、動詞・ing 形より名詞形が入るかを見る。",
       phraseHint: `本文表現: ${item.q4.answer}`,
     });
   });
@@ -1491,85 +1664,255 @@ function createClozeQuestionBank() {
       answer: "submit",
       distractors: ["submitting", "submitted", "submission"],
       category: "品詞/語法",
+      explanation:
+        "Please の直後は原形動詞（依頼の定型）。submitting は進行形、submitted 単体では「過去の事実」の述語になりやすく依頼と噛み合わない、submission は名詞で述語にならない。",
     },
     {
       sentence: "The meeting was _____ because several team members were absent.",
       answer: "postponed",
       distractors: ["postpone", "postponing", "postponement"],
       category: "品詞/語法",
+      explanation:
+        "was のあとが「〜された」という受動・結果なら過去分詞（延期された）。postpone は原形で述語が二重になり、postponing は能動の進行で主語 meeting と噛み合いにくい、postponement は名詞。",
     },
     {
       sentence: "If you have any questions, you can _____ the support desk directly.",
       answer: "contact",
       distractors: ["contacted", "contacting", "contacts"],
       category: "品詞/語法",
+      explanation:
+        "助動詞 can の直後は原形動詞。contacted/contacting はここでは述語の形として不適切、contacts は三人称現在で主語 you と一致しない。",
     },
     {
       sentence: "The company plans to _____ a new branch in Osaka next year.",
       answer: "open",
       distractors: ["opened", "opening", "opens"],
       category: "品詞/語法",
+      explanation:
+        "plan to の to は不定詞なので続くのは原形 open。opened/opens は不定詞のヘッドとして不自然、opening は名詞用法や分詞の印象が強く「計画する」の目的語にしにくい。",
     },
     {
       sentence: "All visitors must _____ at the front desk before entering.",
       answer: "sign in",
       distractors: ["signing in", "signed in", "signs in"],
       category: "品詞/語法",
+      explanation:
+        "must の直後は原形。句動詞 sign in を原形で置く。signed in / signing in は原形フレーズではない、signs in は三人称で visitors と一致しない。",
     },
     {
       sentence: "Please _____ the updated invoice to the accounting team.",
       answer: "forward",
       distractors: ["forwarding", "forwarded", "forwards"],
       category: "品詞/語法",
+      explanation:
+        "Please の直後は原形。forwarding/forwarded は祈使の定型に合わず、forwards は三人称現在で主語がない命令文に合わない。",
     },
     {
       sentence: "The supervisor asked us to _____ the schedule immediately.",
       answer: "revise",
       distractors: ["revised", "revising", "revision"],
       category: "品詞/語法",
+      explanation:
+        "ask us to の to は不定詞なので原形 revise。revised/revising は不定詞に続かない形、revision は名詞。",
     },
     {
       sentence: "Employees should _____ their timesheets by Friday evening.",
       answer: "submit",
       distractors: ["submitted", "submitting", "submission"],
       category: "品詞/語法",
+      explanation:
+        "should の直後は原形動詞。submitted/submitting はここでは述語の形が合わない、submission は名詞。",
     },
   ];
 
   const adverbItems = [
-    ["Our team needs to respond _____ to customer emails during business hours.", "quickly", ["quick", "quickness", "quicked"]],
-    ["The instructions were written _____ so everyone could understand them.", "clearly", ["clear", "clearness", "cleared"]],
-    ["She handled the complaint _____ and solved the issue right away.", "professionally", ["professional", "profession", "professioned"]],
-    ["The engineer checked the system _____ before the launch.", "carefully", ["careful", "carefulness", "carefuled"]],
-    ["Please fill out the form _____ to avoid mistakes.", "accurately", ["accurate", "accuracy", "accurated"]],
+    {
+      question:
+        "Our team needs to respond _____ to customer emails during business hours.",
+      answer: "quickly",
+      distractors: ["quick", "quickness", "quicked"],
+      explanation:
+        "respond をどのように返すかを述べるので副詞が必要。quick は形容詞で動詞を直接は修飾しない。quickness は名詞。",
+    },
+    {
+      question:
+        "The instructions were written _____ so everyone could understand them.",
+      answer: "clearly",
+      distractors: ["clear", "clearness", "cleared"],
+      explanation:
+        "written（書かれ方）を修飾するのは副詞 clearly。clear は形容詞、clearness は名詞。",
+    },
+    {
+      question:
+        "She handled the complaint _____ and solved the issue right away.",
+      answer: "professionally",
+      distractors: ["professional", "profession", "professioned"],
+      explanation:
+        "handled の仕方を述べるのは副詞 professionally。professional は形容詞。",
+    },
+    {
+      question: "The engineer checked the system _____ before the launch.",
+      answer: "carefully",
+      distractors: ["careful", "carefulness", "carefuled"],
+      explanation:
+        "checked の様態は副詞 carefully。careful は形容詞、carefulness は名詞。",
+    },
+    {
+      question: "Please fill out the form _____ to avoid mistakes.",
+      answer: "accurately",
+      distractors: ["accurate", "accuracy", "accurated"],
+      explanation:
+        "fill out をどう記入するかを述べるので副詞 accurately。accurate は形容詞。",
+    },
   ];
 
   const connectorItems = [
-    ["_____ the budget was limited, the team completed the project on time.", "Although", ["Because", "Unless", "However"]],
-    ["Sales increased; _____, the company hired two additional staff members.", "therefore", ["despite", "whereas", "meanwhile"]],
-    ["_____ the proposal is approved, we will start development next week.", "If", ["Unless", "Despite", "However"]],
-    ["He attended the seminar _____ he wanted to improve his presentation skills.", "because", ["although", "unless", "however"]],
-    ["The package will be shipped today _____ payment is confirmed.", "once", ["while", "though", "despite"]],
-    ["The office remained open, _____ many employees worked remotely.", "although", ["because", "unless", "therefore"]],
+    {
+      question:
+        "_____ the budget was limited, the team completed the project on time.",
+      answer: "Although",
+      distractors: ["Because", "Unless", "However"],
+      explanation:
+        "後半は「期限内に終えた」なので、前半は譲歩（制約があったのに達成）が合う。Because だと因果が逆、Unless/However は文構造と意味が合わない。",
+    },
+    {
+      question:
+        "Sales increased; _____, the company hired two additional staff members.",
+      answer: "therefore",
+      distractors: ["despite", "whereas", "meanwhile"],
+      explanation:
+        "前分句が原因・状況、後分句がその帰結（だから採用した）なので therefore。despite は名詞句を取る接続でここには入らない。",
+    },
+    {
+      question:
+        "_____ the proposal is approved, we will start development next week.",
+      answer: "If",
+      distractors: ["Unless", "Despite", "However"],
+      explanation:
+        "後半が「開始する」なので前半は条件（承認されたら）が自然。Unless は否定条件で文意が変わる。Despite は名詞句向き。",
+    },
+    {
+      question:
+        "He attended the seminar _____ he wanted to improve his presentation skills.",
+      answer: "because",
+      distractors: ["although", "unless", "however"],
+      explanation:
+        "セミナーに来た理由を後ろの節が説明しているので because。although だと逆接になり文意が矛盾する。",
+    },
+    {
+      question:
+        "The package will be shipped today _____ payment is confirmed.",
+      answer: "once",
+      distractors: ["while", "though", "despite"],
+      explanation:
+        "「支払いが確認されたら（その時点で）発送」というタイミング条件なので once が合う。while は同時進行、though は譲歩でニュアンスが違う。",
+    },
+    {
+      question:
+        "The office remained open, _____ many employees worked remotely.",
+      answer: "although",
+      distractors: ["because", "unless", "therefore"],
+      explanation:
+        "オープンのまま／多くは在宅、という対比なので譲歩 although。because だと因果が逆になりやすい。",
+    },
   ];
 
   const prepositionItems = [
-    ["The conference will be held _____ April 15 at the city hall.", "on", ["at", "in", "for"]],
-    ["Please send the document _____ email before noon.", "by", ["from", "with", "through"]],
-    ["All applicants must submit the form _____ the deadline.", "before", ["between", "during", "until"]],
-    ["The manager is responsible _____ training new staff members.", "for", ["to", "in", "at"]],
-    ["We discussed the issue _____ detail during the meeting.", "in", ["on", "with", "to"]],
-    ["Please arrive _____ time to set up the equipment.", "on", ["at", "for", "in"]],
-    ["The discount is available _____ all members this month.", "to", ["for", "at", "with"]],
-    ["They divided the tasks _____ three project teams.", "among", ["between", "for", "during"]],
+    {
+      question: "The conference will be held _____ April 15 at the city hall.",
+      answer: "on",
+      distractors: ["at", "in", "for"],
+      explanation:
+        "特定の「日付」の日には on（April 15）。in は月・年など広い範囲、at は時刻・点に近い。",
+    },
+    {
+      question: "Please send the document _____ email before noon.",
+      answer: "by",
+      distractors: ["from", "with", "through"],
+      explanation:
+        "by email は「メールで／メール経由で」という手段の言い方で固定に近い。from email などはここでは不自然。",
+    },
+    {
+      question: "All applicants must submit the form _____ the deadline.",
+      answer: "before",
+      distractors: ["between", "during", "until"],
+      explanation:
+        "期限より前に提出、という時間関係なので before。until だと「期限までにずっと」になり文意が変わる。",
+    },
+    {
+      question: "The manager is responsible _____ training new staff members.",
+      answer: "for",
+      distractors: ["to", "in", "at"],
+      explanation:
+        "responsible は形容詞として for ~（〜に対して責任がある）と組み合わせるのが一般的。",
+    },
+    {
+      question: "We discussed the issue _____ detail during the meeting.",
+      answer: "in",
+      distractors: ["on", "with", "to"],
+      explanation:
+        "「詳しく」は in detail の固定句。on detail は別の意味になりやすい。",
+    },
+    {
+      question: "Please arrive _____ time to set up the equipment.",
+      answer: "on",
+      distractors: ["at", "for", "in"],
+      explanation:
+        "「定刻に」は on time の固定。in time は「間に合うように」とニュアンスが異なる。",
+    },
+    {
+      question: "The discount is available _____ all members this month.",
+      answer: "to",
+      distractors: ["for", "at", "with"],
+      explanation:
+        "available は「〜に利用できる」と言うとき to members / to all members がよく使われる。",
+    },
+    {
+      question: "They divided the tasks _____ three project teams.",
+      answer: "among",
+      distractors: ["between", "for", "during"],
+      explanation:
+        "三者以上のグループ「の間で」分けるときは among。between は主に二者間。",
+    },
   ];
 
   const tenseItems = [
-    ["By the time he arrived, the meeting had already _____.", "started", ["start", "starting", "starts"]],
-    ["The report _____ by Ms. Tanaka every Friday.", "is prepared", ["prepare", "prepared", "preparing"]],
-    ["If sales continue to rise, the company _____ more staff next year.", "will hire", ["hires", "hired", "hiring"]],
-    ["We _____ the final design when the client requested a revision.", "had completed", ["complete", "have completed", "completing"]],
-    ["The CEO said that the new policy _____ next month.", "would begin", ["begins", "has begun", "beginning"]],
+    {
+      question: "By the time he arrived, the meeting had already _____.",
+      answer: "started",
+      distractors: ["start", "starting", "starts"],
+      explanation:
+        "By the time he arrived は過去の一点。それより前にすでに起きていたことは過去完了 had + 過去分詞。",
+    },
+    {
+      question: "The report _____ by Ms. Tanaka every Friday.",
+      answer: "is prepared",
+      distractors: ["prepare", "prepared", "preparing"],
+      explanation:
+        "主語 the report は「作られる」側なので受動が自然。every Friday から習慣の現在も合う → is prepared。",
+    },
+    {
+      question: "If sales continue to rise, the company _____ more staff next year.",
+      answer: "will hire",
+      distractors: ["hires", "hired", "hiring"],
+      explanation:
+        "If 節が現在形で事実条件、主節の next year は未来なので will + 原形。",
+    },
+    {
+      question:
+        "We _____ the final design when the client requested a revision.",
+      answer: "had completed",
+      distractors: ["complete", "have completed", "completing"],
+      explanation:
+        "requested より前にすでに完了していた、という過去の基準より前なので過去完了 had completed。",
+    },
+    {
+      question: "The CEO said that the new policy _____ next month.",
+      answer: "would begin",
+      distractors: ["begins", "has begun", "beginning"],
+      explanation:
+        "主節が過去 said なので、当時から見た「翌月の未来」は間接引話で would + 原形になりやすい。",
+    },
   ];
 
   for (let i = 0; i < 12; i += 1) {
@@ -1580,57 +1923,57 @@ function createClozeQuestionBank() {
         answer: 0,
         toeicUnit: "Part 5 文法・語法",
         category: template.category,
-        explanation: `空欄には「${template.answer}」が入り、文法的に自然な形になります。`,
+        explanation: template.explanation,
         phraseHint: `文中表現: ${template.sentence.replace("_____", template.answer)}`,
       });
     });
   }
 
-  adverbItems.forEach(([question, answer, distractors]) => {
+  adverbItems.forEach((item) => {
     bank.push({
-      question,
-      options: [answer, ...distractors],
+      question: item.question,
+      options: [item.answer, ...item.distractors],
       answer: 0,
       toeicUnit: "Part 5 文法・語法",
       category: "副詞",
-      explanation: `動詞を修飾する副詞が必要なので「${answer}」が正解です。`,
-      phraseHint: `文中熟語: ${question.replace("_____", answer)}`,
+      explanation: item.explanation,
+      phraseHint: `文中熟語: ${item.question.replace("_____", item.answer)}`,
     });
   });
 
-  connectorItems.forEach(([question, answer, distractors]) => {
+  connectorItems.forEach((item) => {
     bank.push({
-      question,
-      options: [answer, ...distractors],
+      question: item.question,
+      options: [item.answer, ...item.distractors],
       answer: 0,
       toeicUnit: "Part 5 文法・語法",
       category: "接続詞",
-      explanation: `前後の意味関係をつなぐ接続詞として「${answer}」が最適です。`,
-      phraseHint: `文脈接続: ${question.replace("_____", answer)}`,
+      explanation: item.explanation,
+      phraseHint: `文脈接続: ${item.question.replace("_____", item.answer)}`,
     });
   });
 
-  prepositionItems.forEach(([question, answer, distractors]) => {
+  prepositionItems.forEach((item) => {
     bank.push({
-      question,
-      options: [answer, ...distractors],
+      question: item.question,
+      options: [item.answer, ...item.distractors],
       answer: 0,
       toeicUnit: "Part 5 文法・語法",
       category: "前置詞",
-      explanation: `前置詞の定型用法により「${answer}」が適切です。`,
-      phraseHint: `定型表現: ${question.replace("_____", answer)}`,
+      explanation: item.explanation,
+      phraseHint: `定型表現: ${item.question.replace("_____", item.answer)}`,
     });
   });
 
-  tenseItems.forEach(([question, answer, distractors]) => {
+  tenseItems.forEach((item) => {
     bank.push({
-      question,
-      options: [answer, ...distractors],
+      question: item.question,
+      options: [item.answer, ...item.distractors],
       answer: 0,
       toeicUnit: "Part 5 文法・語法",
       category: "時制/態",
-      explanation: `文脈の時制・態に一致するのは「${answer}」です。`,
-      phraseHint: `時制ポイント: ${question.replace("_____", answer)}`,
+      explanation: item.explanation,
+      phraseHint: `時制ポイント: ${item.question.replace("_____", item.answer)}`,
     });
   });
 
@@ -2255,6 +2598,7 @@ function setupMiniMockTest(questionBanks) {
         if (isCorrect) session.score += 1;
         if (isCorrect) {
           session.categoryStats[category].correct += 1;
+          playCorrectChime();
         } else {
           session.wrongQuestions.push({
             question: q.question,
@@ -2355,3 +2699,12 @@ if (refreshDashboardButton) {
     renderRecordsDashboard();
   });
 }
+
+(function initSoundFxToggle() {
+  const el = document.getElementById("sound-fx-toggle");
+  if (!el) return;
+  el.checked = getSoundFxEnabled();
+  el.addEventListener("change", () => {
+    setSoundFxEnabled(Boolean(el.checked));
+  });
+})();
