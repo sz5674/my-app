@@ -47,10 +47,15 @@
           </li>
         </ul>
         <p class="home-settings">
-          <label class="control-item sound-fx-label">
-            <input type="checkbox" id="sound-fx-toggle" />
-            正解時に短い音を鳴らす（任意・既定はオフ）
-          </label>
+          <button
+            type="button"
+            class="settings-toggle-btn"
+            id="sound-fx-toggle"
+            aria-pressed="false"
+          >
+            <span class="settings-toggle-btn-label">正解時に短い音を鳴らす</span>
+            <span class="settings-toggle-btn-state" aria-hidden="true">OFF</span>
+          </button>
         </p>
         <div id="home-question-counts"></div>
       </section>
@@ -63,7 +68,18 @@
       </section>
 
       <section id="vocab" class="tab-content">
-        <h2>英単語</h2>
+        <div class="section-title-row section-title-row--vocab">
+          <h2>英単語</h2>
+          <button
+            type="button"
+            class="settings-toggle-btn settings-toggle-btn--compact"
+            id="vocab-auto-pronounce-toggle"
+            aria-pressed="false"
+          >
+            <span class="settings-toggle-btn-label">出題時に発音を聞く</span>
+            <span class="settings-toggle-btn-state" aria-hidden="true">OFF</span>
+          </button>
+        </div>
         <div id="vocab-quiz" class="quiz-box"></div>
       </section>
 
@@ -78,7 +94,18 @@
       </section>
 
       <section id="reading" class="tab-content">
-        <h2>長文読解問題（Part 7）</h2>
+        <div class="section-title-row section-title-row--reading">
+          <h2>長文読解問題（Part 7）</h2>
+          <button
+            type="button"
+            class="settings-toggle-btn settings-toggle-btn--compact"
+            id="reading-auto-read-toggle"
+            aria-pressed="false"
+          >
+            <span class="settings-toggle-btn-label">本文と問題を読み上げ</span>
+            <span class="settings-toggle-btn-state" aria-hidden="true">OFF</span>
+          </button>
+        </div>
         <div id="reading-quiz" class="quiz-box"></div>
       </section>
 

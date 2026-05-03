@@ -8,6 +8,35 @@ const DAILY_RECORD_KEY = "english-app-daily-record-v1";
 const DEFAULT_TIME_LIMIT = 20;
 const DEFAULT_DAILY_GOAL = 30;
 const SOUND_FX_KEY = "english-app-sound-fx-v1";
+const VOCAB_AUTO_PRONOUNCE_KEY = "english-app-vocab-auto-pronounce-v1";
+const READING_AUTO_READ_KEY = "english-app-reading-auto-read-v1";
+
+/** 英単語タブの自動発音 dedupe とヘッダートグル用（DOM 外から参照） */
+let vocabAutoSpeakDedupeKey = null;
+let lastVocabWordForHeaderToggle = "";
+let lastVocabQuestionKeyForHeaderToggle = "";
+
+/** 長文読解タブの読み上げ dedupe とヘッダートグル用 */
+let readingAutoSpeakDedupeKey = null;
+let lastReadingPassageForHeaderToggle = "";
+let lastReadingQuestionForHeaderToggle = "";
+let lastReadingQuestionKeyForHeaderToggle = "";
+
+/** タブ表示時にクイズを再描画して読み上げを発火させる（hidden のまま render した誤作動対策） */
+const quizTabActivationRenderers = {};
+
+function isTabContentActive(sectionId) {
+  const el = document.getElementById(sectionId);
+  return Boolean(el && el.classList.contains("active"));
+}
+
+function syncSettingsToggleButton(btn, on) {
+  if (!btn) return;
+  btn.setAttribute("aria-pressed", on ? "true" : "false");
+  btn.classList.toggle("is-on", Boolean(on));
+  const stateEl = btn.querySelector(".settings-toggle-btn-state");
+  if (stateEl) stateEl.textContent = on ? "ON" : "OFF";
+}
 
 const CONFETTI_COLORS = [
   "#1d4ed8",
@@ -32,6 +61,22 @@ function getSoundFxEnabled() {
 
 function setSoundFxEnabled(enabled) {
   localStorage.setItem(SOUND_FX_KEY, enabled ? "1" : "0");
+}
+
+function getVocabAutoPronounceEnabled() {
+  return localStorage.getItem(VOCAB_AUTO_PRONOUNCE_KEY) === "1";
+}
+
+function setVocabAutoPronounceEnabled(enabled) {
+  localStorage.setItem(VOCAB_AUTO_PRONOUNCE_KEY, enabled ? "1" : "0");
+}
+
+function getReadingAutoReadAloudEnabled() {
+  return localStorage.getItem(READING_AUTO_READ_KEY) === "1";
+}
+
+function setReadingAutoReadAloudEnabled(enabled) {
+  localStorage.setItem(READING_AUTO_READ_KEY, enabled ? "1" : "0");
 }
 
 let sharedAudioContext = null;
@@ -64,6 +109,63 @@ function playCorrectChime() {
     playBell(1047, t0 + 0.07, t0 + 0.22);
   } catch (_err) {
     /* 非HTTPS環境などでは無視 */
+  }
+}
+
+/** 英単語タブ用。ブラウザ組み込みの英語読み上げ（品質は OS・ブラウザ依存） */
+function speakEnglishWord(text) {
+  const synth = window.speechSynthesis;
+  if (!synth || typeof SpeechSynthesisUtterance === "undefined") {
+    return;
+  }
+  const phrase = String(text || "").trim();
+  if (!phrase) return;
+  synth.cancel();
+  const utterance = new SpeechSynthesisUtterance(phrase);
+  utterance.lang = "en-US";
+  utterance.rate = 0.92;
+  synth.speak(utterance);
+}
+
+function normalizeTextForEnglishSpeech(text) {
+  return String(text || "")
+    .replace(/\s+/g, " ")
+    .trim();
+}
+
+/** 長文読解用。本文を読み終えてから設問を読み上げる */
+function speakReadingPassageThenQuestion(passageRaw, questionRaw) {
+  const synth = window.speechSynthesis;
+  if (!synth || typeof SpeechSynthesisUtterance === "undefined") {
+    return;
+  }
+  const passage = normalizeTextForEnglishSpeech(passageRaw);
+  const question = normalizeTextForEnglishSpeech(questionRaw);
+  if (!passage && !question) return;
+  synth.cancel();
+
+  function utter(text, rate, onEnd) {
+    if (!text) {
+      if (onEnd) onEnd();
+      return;
+    }
+    const u = new SpeechSynthesisUtterance(text);
+    u.lang = "en-US";
+    u.rate = rate;
+    if (onEnd) u.onend = onEnd;
+    synth.speak(u);
+  }
+
+  if (passage && question) {
+    utter(passage, 0.88, () => {
+      utter("Question.", 0.92, () => {
+        utter(question, 0.9, null);
+      });
+    });
+  } else if (question) {
+    utter(question, 0.9, null);
+  } else {
+    utter(passage, 0.88, null);
   }
 }
 
@@ -423,10 +525,7 @@ function buildInfiniteQuestionSession(config) {
             ? parsed.weakPriorityEnabled
             : enableWeakPriority,
         wrongOptionStats: parsed.wrongOptionStats || {},
-        correctStreak: Math.min(
-          10,
-          Math.max(0, Number(parsed.correctStreak) || 0)
-        ),
+        correctStreak: Math.max(0, Number(parsed.correctStreak) || 0),
         dailyStats:
           parsed.dailyStats && parsed.dailyStats.date
             ? parsed.dailyStats
@@ -538,6 +637,8 @@ function buildInfiniteQuestionSession(config) {
   }
 
   function moveToNextQuestion() {
+    vocabAutoSpeakDedupeKey = null;
+    readingAutoSpeakDedupeKey = null;
     session.currentQuestion = getNextQuestion();
     rememberQuestion(session.currentQuestion);
     session.isAnswered = false;
@@ -790,10 +891,7 @@ function buildInfiniteQuestionSession(config) {
           }
         });
         if (isCorrect) {
-          session.correctStreak = Math.min(
-            10,
-            Number(session.correctStreak || 0) + 1
-          );
+          session.correctStreak = Number(session.correctStreak || 0) + 1;
           spawnConfettiFromElementPracticeStreak(button, session.correctStreak);
           playCorrectChime();
         } else {
@@ -827,6 +925,8 @@ function buildInfiniteQuestionSession(config) {
 
     if (unitSelect) {
       unitSelect.addEventListener("change", (event) => {
+        vocabAutoSpeakDedupeKey = null;
+        readingAutoSpeakDedupeKey = null;
         session.selectedUnit = event.target.value;
         session.currentQuestion = getNextQuestion();
         session.isAnswered = false;
@@ -854,6 +954,8 @@ function buildInfiniteQuestionSession(config) {
 
     if (reviewOnlyCheckbox) {
       reviewOnlyCheckbox.addEventListener("change", (event) => {
+        vocabAutoSpeakDedupeKey = null;
+        readingAutoSpeakDedupeKey = null;
         session.reviewOnly = Boolean(event.target.checked);
         session.currentQuestion = getNextQuestion();
         session.isAnswered = false;
@@ -873,6 +975,51 @@ function buildInfiniteQuestionSession(config) {
     }
 
     startTimer(feedback);
+
+    if (simplePromptMode) {
+      const qKey = `${q.question}\t${q.answer}\t${q.options.join("\t")}`;
+      lastVocabWordForHeaderToggle = q.question;
+      lastVocabQuestionKeyForHeaderToggle = qKey;
+      if (
+        getVocabAutoPronounceEnabled() &&
+        !session.isAnswered &&
+        isTabContentActive("vocab") &&
+        vocabAutoSpeakDedupeKey !== qKey
+      ) {
+        vocabAutoSpeakDedupeKey = qKey;
+        window.setTimeout(() => {
+          speakEnglishWord(q.question);
+        }, 0);
+      }
+    }
+
+    if (
+      sectionName === "reading" &&
+      showPassage &&
+      q.passage &&
+      !session.isAnswered
+    ) {
+      const qKey = `${q.passage}\t${q.question}\t${q.answer}\t${q.options.join("\t")}`;
+      lastReadingPassageForHeaderToggle = q.passage;
+      lastReadingQuestionForHeaderToggle = q.question;
+      lastReadingQuestionKeyForHeaderToggle = qKey;
+      if (
+        getReadingAutoReadAloudEnabled() &&
+        isTabContentActive("reading") &&
+        readingAutoSpeakDedupeKey !== qKey
+      ) {
+        readingAutoSpeakDedupeKey = qKey;
+        window.setTimeout(() => {
+          speakReadingPassageThenQuestion(q.passage, q.question);
+        }, 0);
+      }
+    }
+  }
+
+  if (sectionName === "vocab") {
+    quizTabActivationRenderers.vocab = render;
+  } else if (sectionName === "reading") {
+    quizTabActivationRenderers.reading = render;
   }
 
   render();
@@ -2040,6 +2187,14 @@ function renderHomeQuestionCounts() {
 
 function activateTab(tabName) {
   if (!tabName || !document.getElementById(tabName)) return;
+  const prevActiveId = document.querySelector(".tab-content.active")?.id;
+  if (
+    prevActiveId !== tabName &&
+    typeof window.speechSynthesis !== "undefined" &&
+    window.speechSynthesis
+  ) {
+    window.speechSynthesis.cancel();
+  }
   document.querySelectorAll(".tab-button").forEach((btn) => {
     btn.classList.toggle("active", btn.dataset.tab === tabName);
   });
@@ -2048,6 +2203,10 @@ function activateTab(tabName) {
   });
   if (tabName === "records") {
     renderRecordsDashboard();
+  }
+  const refreshQuiz = quizTabActivationRenderers[tabName];
+  if (typeof refreshQuiz === "function") {
+    refreshQuiz();
   }
 }
 
@@ -2736,10 +2895,49 @@ if (refreshDashboardButton) {
 }
 
 (function initSoundFxToggle() {
-  const el = document.getElementById("sound-fx-toggle");
-  if (!el) return;
-  el.checked = getSoundFxEnabled();
-  el.addEventListener("change", () => {
-    setSoundFxEnabled(Boolean(el.checked));
+  const btn = document.getElementById("sound-fx-toggle");
+  if (!btn) return;
+  syncSettingsToggleButton(btn, getSoundFxEnabled());
+  btn.addEventListener("click", () => {
+    const next = !getSoundFxEnabled();
+    setSoundFxEnabled(next);
+    syncSettingsToggleButton(btn, next);
+  });
+})();
+
+(function setupVocabHeaderPronounceToggle() {
+  const btn = document.getElementById("vocab-auto-pronounce-toggle");
+  if (!btn) return;
+  syncSettingsToggleButton(btn, getVocabAutoPronounceEnabled());
+  btn.addEventListener("click", () => {
+    const next = !getVocabAutoPronounceEnabled();
+    setVocabAutoPronounceEnabled(next);
+    syncSettingsToggleButton(btn, next);
+    if (next && lastVocabWordForHeaderToggle) {
+      vocabAutoSpeakDedupeKey = lastVocabQuestionKeyForHeaderToggle;
+      speakEnglishWord(lastVocabWordForHeaderToggle);
+    }
+  });
+})();
+
+(function setupReadingHeaderReadAloudToggle() {
+  const btn = document.getElementById("reading-auto-read-toggle");
+  if (!btn) return;
+  syncSettingsToggleButton(btn, getReadingAutoReadAloudEnabled());
+  btn.addEventListener("click", () => {
+    const next = !getReadingAutoReadAloudEnabled();
+    setReadingAutoReadAloudEnabled(next);
+    syncSettingsToggleButton(btn, next);
+    if (
+      next &&
+      lastReadingPassageForHeaderToggle &&
+      lastReadingQuestionForHeaderToggle
+    ) {
+      readingAutoSpeakDedupeKey = lastReadingQuestionKeyForHeaderToggle;
+      speakReadingPassageThenQuestion(
+        lastReadingPassageForHeaderToggle,
+        lastReadingQuestionForHeaderToggle
+      );
+    }
   });
 })();

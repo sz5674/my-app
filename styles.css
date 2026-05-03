@@ -113,11 +113,95 @@ body {
   margin: 0 0 12px;
 }
 
+.section-title-row {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px 16px;
+  margin: 0 0 14px;
+}
+
+.section-title-row h2 {
+  margin: 0;
+  font-size: 1.35rem;
+}
+
 .simple-word {
   font-size: 28px;
   text-align: center;
   margin: 10px 0 14px;
   letter-spacing: 0.5px;
+}
+
+.settings-toggle-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+  margin: 0;
+  padding: 10px 14px;
+  font-family: inherit;
+  font-size: 14px;
+  font-weight: 600;
+  color: #3f3f46;
+  background: #fafafa;
+  border: 1px solid #d4d4d8;
+  border-radius: 9px;
+  cursor: pointer;
+  user-select: none;
+  transition:
+    background 0.15s ease,
+    border-color 0.15s ease,
+    color 0.15s ease;
+}
+
+.settings-toggle-btn:hover {
+  background: #f4f4f5;
+  border-color: #a1a1aa;
+}
+
+.settings-toggle-btn:focus-visible {
+  outline: 2px solid #71717a;
+  outline-offset: 2px;
+}
+
+.settings-toggle-btn.is-on {
+  color: #334155;
+  background: #eef2ff;
+  border-color: #a5b4fc;
+}
+
+.settings-toggle-btn-label {
+  text-align: left;
+}
+
+.settings-toggle-btn-state {
+  flex-shrink: 0;
+  min-width: 2.25rem;
+  padding: 4px 9px;
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 0.09em;
+  text-align: center;
+  border-radius: 5px;
+  background: rgba(63, 63, 70, 0.1);
+  color: inherit;
+}
+
+.settings-toggle-btn.is-on .settings-toggle-btn-state {
+  background: #c7d2fe;
+  color: #3730a3;
+}
+
+.settings-toggle-btn--compact {
+  padding: 7px 11px;
+  font-size: 13px;
+  gap: 8px;
+}
+
+.settings-toggle-btn--compact .settings-toggle-btn-state {
+  padding: 3px 8px;
+  font-size: 10px;
 }
 
 .control-row {
@@ -375,10 +459,6 @@ body {
   font-size: 14px;
 }
 
-.sound-fx-label {
-  cursor: pointer;
-  user-select: none;
-}
 
 @media (prefers-reduced-motion: reduce) {
   .tab-content.active {
