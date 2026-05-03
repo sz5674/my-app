@@ -70,15 +70,41 @@
       <section id="vocab" class="tab-content">
         <div class="section-title-row section-title-row--vocab">
           <h2>英単語</h2>
-          <button
-            type="button"
-            class="settings-toggle-btn settings-toggle-btn--compact"
-            id="vocab-auto-pronounce-toggle"
-            aria-pressed="false"
-          >
-            <span class="settings-toggle-btn-label">出題時に発音を聞く</span>
-            <span class="settings-toggle-btn-state" aria-hidden="true">OFF</span>
-          </button>
+          <div class="section-title-actions">
+            <button
+              type="button"
+              class="icon-speaker-btn"
+              id="vocab-replay-speech"
+              aria-label="単語を読み上げる"
+              title="単語を読み上げる"
+            >
+              <svg
+                xmlns="http://www.w3.org/2000/svg"
+                width="22"
+                height="22"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                stroke-width="2"
+                stroke-linecap="round"
+                stroke-linejoin="round"
+                aria-hidden="true"
+              >
+                <polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5" />
+                <path d="M15.54 8.46a5 5 0 0 1 0 7.07" />
+                <path d="M19.07 4.93a10 10 0 0 1 0 14.14" />
+              </svg>
+            </button>
+            <button
+              type="button"
+              class="settings-toggle-btn settings-toggle-btn--compact"
+              id="vocab-auto-pronounce-toggle"
+              aria-pressed="false"
+            >
+              <span class="settings-toggle-btn-label">出題時に発音を聞く</span>
+              <span class="settings-toggle-btn-state" aria-hidden="true">OFF</span>
+            </button>
+          </div>
         </div>
         <div id="vocab-quiz" class="quiz-box"></div>
       </section>
@@ -96,15 +122,41 @@
       <section id="reading" class="tab-content">
         <div class="section-title-row section-title-row--reading">
           <h2>長文読解問題（Part 7）</h2>
-          <button
-            type="button"
-            class="settings-toggle-btn settings-toggle-btn--compact"
-            id="reading-auto-read-toggle"
-            aria-pressed="false"
-          >
-            <span class="settings-toggle-btn-label">本文と問題を読み上げ</span>
-            <span class="settings-toggle-btn-state" aria-hidden="true">OFF</span>
-          </button>
+          <div class="section-title-actions">
+            <button
+              type="button"
+              class="icon-speaker-btn"
+              id="reading-replay-speech"
+              aria-label="本文と問題を読み上げる"
+              title="本文と問題を読み上げる"
+            >
+              <svg
+                xmlns="http://www.w3.org/2000/svg"
+                width="22"
+                height="22"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                stroke-width="2"
+                stroke-linecap="round"
+                stroke-linejoin="round"
+                aria-hidden="true"
+              >
+                <polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5" />
+                <path d="M15.54 8.46a5 5 0 0 1 0 7.07" />
+                <path d="M19.07 4.93a10 10 0 0 1 0 14.14" />
+              </svg>
+            </button>
+            <button
+              type="button"
+              class="settings-toggle-btn settings-toggle-btn--compact"
+              id="reading-auto-read-toggle"
+              aria-pressed="false"
+            >
+              <span class="settings-toggle-btn-label">本文と問題を読み上げ</span>
+              <span class="settings-toggle-btn-state" aria-hidden="true">OFF</span>
+            </button>
+          </div>
         </div>
         <div id="reading-quiz" class="quiz-box"></div>
       </section>

@@ -2941,3 +2941,24 @@ if (refreshDashboardButton) {
     }
   });
 })();
+
+(function setupVocabReplaySpeechButton() {
+  const btn = document.getElementById("vocab-replay-speech");
+  if (!btn) return;
+  btn.addEventListener("click", () => {
+    const word = lastVocabWordForHeaderToggle;
+    if (!word) return;
+    speakEnglishWord(word);
+  });
+})();
+
+(function setupReadingReplaySpeechButton() {
+  const btn = document.getElementById("reading-replay-speech");
+  if (!btn) return;
+  btn.addEventListener("click", () => {
+    const passage = lastReadingPassageForHeaderToggle;
+    const question = lastReadingQuestionForHeaderToggle;
+    if (!passage || !question) return;
+    speakReadingPassageThenQuestion(passage, question);
+  });
+})();

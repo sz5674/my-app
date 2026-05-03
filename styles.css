@@ -127,6 +127,48 @@ body {
   font-size: 1.35rem;
 }
 
+.section-title-actions {
+  display: inline-flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 10px;
+}
+
+.icon-speaker-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  box-sizing: border-box;
+  width: 40px;
+  height: 40px;
+  padding: 0;
+  margin: 0;
+  color: #52525b;
+  background: #fafafa;
+  border: 1px solid #d4d4d8;
+  border-radius: 9px;
+  cursor: pointer;
+  transition:
+    background 0.15s ease,
+    border-color 0.15s ease,
+    color 0.15s ease;
+}
+
+.icon-speaker-btn:hover {
+  background: #f4f4f5;
+  border-color: #a1a1aa;
+  color: #27272a;
+}
+
+.icon-speaker-btn:focus-visible {
+  outline: 2px solid #71717a;
+  outline-offset: 2px;
+}
+
+.icon-speaker-btn:active {
+  background: #e4e4e7;
+}
+
 .simple-word {
   font-size: 28px;
   text-align: center;
