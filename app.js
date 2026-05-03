@@ -46,18 +46,22 @@ function playCorrectChime() {
     if (ctx.state === "suspended") {
       void ctx.resume();
     }
-    const osc = ctx.createOscillator();
-    const gain = ctx.createGain();
-    osc.type = "sine";
-    osc.frequency.value = 880;
-    osc.connect(gain);
-    gain.connect(ctx.destination);
     const t0 = ctx.currentTime;
-    gain.gain.setValueAtTime(0.0001, t0);
-    gain.gain.exponentialRampToValueAtTime(0.07, t0 + 0.02);
-    gain.gain.exponentialRampToValueAtTime(0.0001, t0 + 0.12);
-    osc.start(t0);
-    osc.stop(t0 + 0.13);
+    const playBell = (freqHz, start, stop) => {
+      const osc = ctx.createOscillator();
+      const gain = ctx.createGain();
+      osc.type = "triangle";
+      osc.frequency.value = freqHz;
+      osc.connect(gain);
+      gain.connect(ctx.destination);
+      gain.gain.setValueAtTime(0.0001, start);
+      gain.gain.exponentialRampToValueAtTime(0.055, start + 0.012);
+      gain.gain.exponentialRampToValueAtTime(0.0001, stop);
+      osc.start(start);
+      osc.stop(stop);
+    };
+    playBell(784, t0, t0 + 0.1);
+    playBell(1047, t0 + 0.07, t0 + 0.22);
   } catch (_err) {
     /* 非HTTPS環境などでは無視 */
   }
@@ -129,9 +133,9 @@ function spawnConfettiFromElement(element, tier = "small") {
 function spawnConfettiAtPracticeStreak(centerX, centerY, streakAfterCorrect) {
   const streak = Math.min(Math.max(Number(streakAfterCorrect) || 1, 1), 10);
   const t = (streak - 1) / 9;
-  let count = Math.round(12 + t * 70);
-  let maxDurMs = Math.round(920 + streak * 42);
-  let baseSpeed = Math.round(86 + t * 62);
+  let count = Math.round(22 + t * 115);
+  let maxDurMs = Math.round(960 + streak * 48);
+  let baseSpeed = Math.round(92 + t * 68);
   if (prefersReducedMotion()) {
     count = Math.min(Math.max(Math.round(4 + t * 6), 4), 10);
     maxDurMs = Math.min(maxDurMs, 650);
@@ -1591,64 +1595,95 @@ function createPart6QuestionBank() {
   ];
   passages.push(...extraPart6Passages);
 
+  function part6PassageWithBlank4Slot(source) {
+    return source
+      .replace(
+        "\n\nThank you for your cooperation.",
+        "\n\nID [4] must be completed before a badge is issued.\n\nThank you for your cooperation."
+      )
+      .replace(
+        "\n\nBest regards,\nTraining Office",
+        "\n\nPlease complete online [4] by 10:00 a.m.\n\nBest regards,\nTraining Office"
+      )
+      .replace(
+        "\n\nIT Support Team",
+        "\n\nThe service may remain [4] for a few minutes after restart.\n\nIT Support Team"
+      );
+  }
+
+  function escapeHtmlMinimal(text) {
+    return String(text)
+      .replace(/&/g, "&amp;")
+      .replace(/</g, "&lt;")
+      .replace(/>/g, "&gt;");
+  }
+
+  function part6DisplayPassage(template, item, blankNum) {
+    let s = template;
+    const fill = {
+      1: item.q1.answer,
+      2: item.q2.answer,
+      3: item.q3.answer,
+      4: item.q4.answer,
+    };
+    [1, 2, 3, 4].forEach((n) => {
+      const marker = `[${n}]`;
+      if (!fill[n] || !s.includes(marker)) return;
+      const repl =
+        n === blankNum ? "_____" : escapeHtmlMinimal(String(fill[n]));
+      while (s.includes(marker)) {
+        s = s.replace(marker, repl);
+      }
+    });
+    s = s.replace(/\[\d+\]/g, "_____");
+    return s;
+  }
+
   const bank = [];
   passages.forEach((item) => {
+    const passageQ4 = part6PassageWithBlank4Slot(item.passage);
     bank.push({
-      passage: item.passage.replace("[1]", "_____"),
-      question: "Blank 1: Choose the best word or phrase.",
+      passage: part6DisplayPassage(item.passage, item, 1),
+      question: "空所（_____）に入る語・語句として最も適切なものを選んでください。",
       options: item.q1.options,
       answer: item.q1.options.indexOf(item.q1.answer),
       category: "語法",
       toeicUnit: "Part 6 テキスト完成",
       explanation:
-        "Blank 1：直前の will / must / Please / are expected to などと主語を見て、そこに続く述語の形（原形・過去分詞など）で候補を削る。",
+        "本文の前半の空所です。直前の will / must / Please / are expected to などと主語を見て、そこに続く述語の形（原形・過去分詞など）で候補を削ってください。",
       phraseHint: `本文表現: ${item.q1.answer}`,
     });
     bank.push({
-      passage: item.passage.replace("[2]", "_____"),
-      question: "Blank 2: Choose the best word or phrase.",
+      passage: part6DisplayPassage(item.passage, item, 2),
+      question: "空所（_____）に入る語・語句として最も適切なものを選んでください。",
       options: item.q2.options,
       answer: item.q2.options.indexOf(item.q2.answer),
       category: "品詞/時制",
       toeicUnit: "Part 6 テキスト完成",
       explanation:
-        "Blank 2：同じ段落内の並列・次の述語と、時制・原形・受動のどれが揃うかで形を決める。",
+        "本文の続きの空所です。同じ段落内の並列や直前の述語と、時制・原形・受動のどれが揃うかで形を決めてください。",
       phraseHint: `本文表現: ${item.q2.answer}`,
     });
     bank.push({
-      passage: item.passage.replace("[3]", "_____"),
-      question: "Blank 3: Which sentence best fits in the blank?",
+      passage: part6DisplayPassage(item.passage, item, 3),
+      question: "空所（_____）に入る英文として最も適切なものを選んでください。",
       options: item.q3.options,
       answer: item.q3.options.indexOf(item.q3.answer),
       category: "文挿入",
       toeicUnit: "Part 6 テキスト完成",
       explanation:
-        "Blank 3：空欄の直前・直後の話題（目的・手順・注意）と論理的につながる文だけが答え。他は話題がずれる。",
+        "文挿入です。空所の直前・直後の話題（目的・手順・注意）と論理的につながる英文だけが答えになります。ほかは話題がずれます。",
       phraseHint: "Part 6ポイント: 前後の段落と話題が一致する挿入文を選ぶ",
     });
     bank.push({
-      passage:
-        item.passage
-          .replace(
-            "\n\nThank you for your cooperation.",
-            "\n\nID [4] must be completed before a badge is issued.\n\nThank you for your cooperation."
-          )
-          .replace(
-            "\n\nBest regards,\nTraining Office",
-            "\n\nPlease complete online [4] by 10:00 a.m.\n\nBest regards,\nTraining Office"
-          )
-          .replace(
-            "\n\nIT Support Team",
-            "\n\nThe service may remain [4] for a few minutes after restart.\n\nIT Support Team"
-          )
-          .replace("[4]", "_____"),
-      question: "Blank 4: Choose the best word form for the context.",
+      passage: part6DisplayPassage(passageQ4, item, 4),
+      question: "空所（_____）に入る語の形として最も適切なものを選んでください。",
       options: item.q4.options,
       answer: item.q4.options.indexOf(item.q4.answer),
       category: "語形",
       toeicUnit: "Part 6 テキスト完成",
       explanation:
-        "Blank 4：冠詞や形容詞のあとなど名詞スロットでは、動詞・ing 形より名詞形が入るかを見る。",
+        "語形問題です。冠詞や形容詞のあとなど「名詞」の位置では、動詞形や ing より名詞形が入るかを確認してください。",
       phraseHint: `本文表現: ${item.q4.answer}`,
     });
   });
